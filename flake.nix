@@ -11,7 +11,15 @@
       cargoToml = fromTOML (readFile ./Cargo.toml);
       version = "${cargoToml.package.version}+${substring 0 8 self.lastModifiedDate}_${self.shortRev or "dirty"}";
 
-      mkSonicServer = { lib, rustPlatform, llvmPackages, clang, ... }:
+      mkSonicServer =
+        { lib
+        , rustPlatform
+        , llvmPackages
+        , clang
+        , withJemallocAllocator ? true
+        , withChineseTokenizer ? true
+        , ...
+        }:
         rustPlatform.buildRustPackage {
           pname = cargoToml.package.name;
           inherit version;
@@ -20,6 +28,11 @@
           cargoLock.lockFile = ./Cargo.lock;
           # TODO: fix and enable tests
           doCheck = false;
+
+          buildNoDefaultFeatures = true;
+          buildFeatures =
+            (lib.optional withJemallocAllocator "allocator-jemalloc")
+            ++ (lib.optional withChineseTokenizer "tokenizer-chinese");
 
           nativeBuildInputs = [
             llvmPackages.libclang
