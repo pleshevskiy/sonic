@@ -1,3 +1,8 @@
+---
+This is fork that supports nix flakes. See installation section for details
+---
+
+
 Sonic
 =====
 
@@ -60,6 +65,59 @@ Sonic is integrated in all Crisp search products on the [Crisp](https://crisp.ch
 ### Installation
 
 Sonic is built in Rust. To install it, use `cargo install` or pull the source code from `master`.
+
+**👉 Install using nix (Flakes):**
+
+Flake support was added to Nix in version 2.4. As of Nix 2.8, you must enable the `nix-command` and `flakes` experimental features.
+
+Sonic server can be run directly from the repository, using:
+
+```sh
+nix run github:pleshevskiy/sonic
+```
+
+To install sonic-server to your user profile:
+
+```sh
+nix profile install github:pleshevskiy/sonic
+```
+
+To use it in another flake:
+
+```sh
+{
+  inputs = {
+    sonic-server.url = "github:pleshevskiy/sonic";
+  };
+}
+```
+
+For example, to install it in NixOS:
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    sonic-server.url = "github:pleshevskiy/sonic";
+  };
+  outputs = inputs @ { self, nixpkgs, ... }:
+    let system = "x86_64-linux"; in
+    {
+      nixosConfigurations.alice = nixpkgs.lib.nixosSystem {
+        inherit system;
+
+        specialArgs = { inherit inputs; };
+
+        modules = [
+          ./configuration.nix
+          ({ inputs, ... }: {
+            nixpkgs.overlays = [inputs.sonic-server.overlays.default];
+            environment.systemPackages = [ sonic-server ];
+          })
+        ];
+      };
+    };
+}
+```
 
 **👉 Install from source:**
 
