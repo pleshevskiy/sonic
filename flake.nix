@@ -30,9 +30,8 @@
           doCheck = false;
 
           buildNoDefaultFeatures = true;
-          buildFeatures =
-            (lib.optional withJemallocAllocator "allocator-jemalloc")
-            ++ (lib.optional withChineseTokenizer "tokenizer-chinese");
+          buildFeatures = lib.optional withJemallocAllocator "allocator-jemalloc"
+            ++ lib.optional withChineseTokenizer "tokenizer-chinese";
 
           nativeBuildInputs = [
             llvmPackages.libclang
@@ -42,6 +41,10 @@
           # Needed so bindgen can find libclang.so
           LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
           BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${llvmPackages.libclang.lib}/lib/clang/${lib.getVersion clang}/include";
+
+          postPatch = ''
+            substituteInPlace src/main.rs --replace "./config.cfg" "$out/etc/sonic/config.cfg"
+          '';
 
           postInstall = ''
             mkdir -p $out/etc/
